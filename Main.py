@@ -17,6 +17,10 @@ monkey.patch_all()
 app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
+
+with app.app_context():
+	db.create_all()
+
 audioInfo ={
 		'name':'Testing title from server',
 		'author':'Sammuel Zebradoe',
@@ -54,10 +58,12 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		app.logger.debug(res)		#iv = req_data.iv
 		#session_key and openid should be saved, while session_key shouldn't be transed by web
 		openid = res[u'openid']
-		record_anew = Identity.create_id_unique_record(openid=openid,uploaded_data='testing_data<ptn_>')
-		db.session.add(record_anew)
-		db.session.commit()
-		
+		(record_anew,flag_anew) = Identity.create_id_unique_record(openid=openid,uploaded_data='testing_data<ptn_>')#fetch the anew flag
+		if flag_anew:
+			db.session.add(record_anew)
+			db.session.commit()
+		else:
+			app.logger.debug(u'重复openid访问,不会更新数据库：'+openid)		
 		try:
 			return jsonify({'openid':res[u'openid']})
 		except:
@@ -66,6 +72,7 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 	else:
 		return '<h1> you are not allwed to get anything unless post<h1>'
 
-app.run(host = '0.0.0.0',port = 443,ssl_context=("Crts/214194239870590.pem","Crts/214194239870590.key"))#http_server = WSGIServer(('', 5000), app)
+if __name__ =='__main__':
+	app.run(host = '0.0.0.0',port = 443,ssl_context=("Crts/214194239870590.pem","Crts/214194239870590.key"))#http_server = WSGIServer(('', 5000), app)
 #http_server.serve_forever()
 
