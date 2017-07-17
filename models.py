@@ -34,7 +34,10 @@ class Identity(db.Model):
 			#deal with wrong number of <ptn_> or default parametres for data_checking
 	@classmethod
 	def get_by_openid(cls, openid):
-		return cls.query.filter_by(openid=openid).first()
+		try:
+			return cls.query.filter_by(openid=openid).first()
+		except:# in case that database doesn't exist
+			return 0
 	@classmethod
 	def create_id_unique_record(cls,openid,uploaded_data,gender=2,pzn_sessn=0,max_sessn=12):
 		exst_record = cls.get_by_openid(openid)
