@@ -1,6 +1,6 @@
 # coding=utf-8
 from datetime import datetime
-
+from ext import db
 class Identity(db.Model):
 	pzn_group = [1,1,1]# present group, 1 for mindfulness group, each site corresponding to female (0),male (1),unknown(2)
 	
@@ -17,6 +17,7 @@ class Identity(db.Model):
 	usr_name = db.Column(db.String(80))
 	name = db.Column(db.String(28))	
 	email = db.Column(db.String(120))
+	session_key = db.Column(db.String(120))
 	fdbck = db.Column(db.String(3000))# stored in formatted string, one section for each day, 10 - 30 characters for each day
 	
 	def __init__(self,openid,group=1,gender = 2,pzn_sessn=0,max_sessn=12,putin_data = ''):
@@ -27,10 +28,10 @@ class Identity(db.Model):
 		self.max_sessn = max_sessn
 		trsd_data =  putin_data.split('<ptn_>')
 		if len(trsd_data)==5:
-			self.daily_ratn，self.usr_name,self.name,self.email,self.fdbck =trsd_data
+			self.daily_ratn,self.usr_name,self.name,self.email,self.fdbck =trsd_data
 		else:
 			self.fdbck = putin_data
-			self.daily_ratn，self.usr_name,self.name,self.email = ('Bugs','Is','Nothg','BtChallnge')
+			self.daily_ratn,self.usr_name,self.name,self.email = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
 	@classmethod
 	def group_gen(gender):
@@ -45,7 +46,7 @@ class Identity(db.Model):
 		if exst_record:
 			return exst_record
 		pzn_group(gender) = 1 - pzn_group# 
-		rst = cls(openid=openid，group = cls.group_gen(gender),gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn)
+		rst = cls(openid=openid,group = cls.group_gen(gender),gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn)
 		# to satisfy superior editting of changing pzn_sessn or max_sessn
 		return rst
 		
