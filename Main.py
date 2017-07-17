@@ -5,7 +5,7 @@ import json
 #from DeEnc.WXCrypt import WXBizDataCrypt as WXCrypt
 from flask import Flask,request,jsonify
 from ext import db
-from users import User
+from models import Identity
 app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
@@ -45,15 +45,15 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		f.close()
 		app.logger.debug(res)		#iv = req_data.iv
 		#session_key and openid should be saved, while session_key shouldn't be transed by web
+		
+		
+		db.session.commit()
+		
 		try:
 			return jsonify({'openid':res[u'openid']})
 		except:
 			return res[u'errmsg']
-#		if iv!='skipped':
-#			signature = req_data.signature
-#			sessionKey = req_ss.sessionKey
-#			pc = WXCrypt(appId,sessionKey)
-#			dncData = pc.decryptData(encData,iv)
+		
 	else:
 		return '<h1> you are not allwed to get anything unless post<h1>'
 app.run('0.0.0.0',debug=True,port=443,ssl_context=("Crts/214194239870590.pem",
