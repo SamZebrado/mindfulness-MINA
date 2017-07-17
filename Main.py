@@ -2,10 +2,18 @@
 import urllib
 import urllib2
 import json
+# flask
 #from DeEnc.WXCrypt import WXBizDataCrypt as WXCrypt
 from flask import Flask,request,jsonify
 from ext import db
 from models import Identity
+# flask end
+# gevent
+from gevent import monkey
+from gevent.pywsgi import WSGIServer
+monkey.patch_all()
+# gevent end
+
 app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
@@ -56,6 +64,8 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		
 	else:
 		return '<h1> you are not allwed to get anything unless post<h1>'
-app.run('0.0.0.0',debug=True,port=443,ssl_context=("Crts/214194239870590.pem",
-"Crts/214194239870590.key"))
+
+# app.run()
+http_server = WSGIServer(('', 5000), app)
+http_server.serve_forever()
 
