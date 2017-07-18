@@ -21,11 +21,7 @@ db.init_app(app)
 with app.app_context():
 	db.create_all()
 
-audioInfo ={
-		'name':'Testing title from server',
-		'author':'Sammuel Zebradoe',
-		'src':	'http://szdatabucket1-1253981734.cossh.myqcloud.com/lxAudio_40_Days/lsn_1.mp3'#'http://dx.sc.chinaz.com/Files/DownLoad/sound1/201707/8934.mp3'
-	}
+# audioInfo ={'name':'Testing title from server', 'author':'Sammuel Zebradoe','src':	'http://szdatabucket1-1253981734.cossh.myqcloud.com/lxAudio_40_Days/lsn_1.mp3'#'http://dx.sc.chinaz.com/Files/DownLoad/sound1/201707/8934.mp3' }
 
 @app.route('/tag/')
 def index():
@@ -36,10 +32,13 @@ def brothers():
 @app.route('/room506/')
 def roommate():
 	return "山舟，来，周嘉涛，秦王元；\n猴季，Mr.Sulu，大磊，米老"
-@app.route('/server/audioInfo/',methods = ['POST'])
-def wx_server():
-	
-	return jsonify({'audioInfo':audioInfo})
+@app.route('/audioInfo/',methods = ['POST'])
+def wx_getInfo():
+	req_data = json.loads(request.get_data())
+	openid = req_data[u'openid']
+	rcd = Identity.get_by_openid(openid = openid)#present record
+	audioInfo = AudioInfo.get_Info(sessn_No = rcd.pzn_sessn,group = rcd.group)#selected audio record
+	return json.dumps(audioInfo)
 @app.route('/UserLog/',methods=['POST'])
 def wx_UserLog():
 	req_data = json.loads(request.get_data())
