@@ -36,11 +36,23 @@ def brothers():
 @app.route('/room506/')
 def roommate():
 	return "山舟，来，周嘉涛，秦王元；\n猴季，Mr.Sulu，大磊，米老"
-@app.route('/server/audioInfo/')
+@app.route('/server/audioInfo/',methods = ['POST'])
 def wx_server():
+	
 	return jsonify({'audioInfo':audioInfo})
-@app.route('/onLogin/',methods=['GET','POST'])
-def wx_Login():
+@app.route('/UserLog/',methods=['POST'])
+def wx_UserLog():
+	req_data = json.loads(request.get_data())
+	openid = req_data[u'openid']
+	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid)#fetch the anew flag
+	db.session.merge(record_anew)
+	db.session.commit()
+	app.logger.debug("in UserLog")
+	app.logger.debug(record_anew.created_time)
+	return jsonify({'pzn_sessn':record_anew.pzn_sessn})#max sessn can also be returned to extend training plans for the participant
+
+@app.route('/UserRegist/',methods=['GET','POST'])
+def wx_UserRegist():
 	appId = 'wxde4ed04d17675e14'
 	if request.method=='POST':
 		req_data = json.loads(request.get_data())
@@ -58,12 +70,13 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		app.logger.debug(res)		#iv = req_data.iv
 		#session_key and openid should be saved, while session_key shouldn't be transed by web
 		openid = res[u'openid']
-		(record_anew,flag_anew) = Identity.create_id_unique_record(openid=openid,uploaded_data='testing_data<ptn_>')#fetch the anew flag
-		if flag_anew:
-			db.session.add(record_anew)
-			db.session.commit()
-		else:
-			app.logger.debug(u'重复openid访问,不会更新数据库：'+openid)		
+		(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid)#fetch the anew flag
+		app.logger.debug("in UserRegist before commit")
+		app.logger.debug(record_anew.created_time)
+		db.session.merge(record_anew)
+		db.session.commit()
+		app.logger.debug("in UserRegist after commit")
+		app.logger.debug(record_anew.created_time)
 		try:
 			return jsonify({'openid':res[u'openid']})
 		except:
