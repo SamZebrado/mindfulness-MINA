@@ -30,11 +30,20 @@ class Identity(db.Model):
 		self.max_sessn = max_sessn
 		trsd_data =  putin_data.split('<ptn_>')
 		if len(trsd_data)==5:
-			self.daily_ratn,self.usr_name,self.name,self.email,self.fdbck =trsd_data
+			self.usr_name,self.name,self.email,self.daily_ratn,self.fdbck =trsd_data
 		else:
 			self.fdbck = putin_data
-			self.daily_ratn,self.usr_name,self.name,self.email = ('Bugs','Is','Nothg','BtChallnge')
+			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
+	def putn_data(self):
+		return "<putn_>".join([self.usr_name,self.name,self.email,self.daily_ratn,self.fdbck])
+	def merge_putn_data(self,short_dt = '',seq = 0):#if seq<0, short_dt will be added at the end of long_dt in
+# inversed sequence
+		ds1 = list(self.putn_data().split('<ptn_>'))
+		ds2 = list(short_dt.split('<ptn_>'))
+		for ii in range(0,len(ds2)):
+			ds1[ii+seq] += ds2[ii]
+		return self
 	@classmethod
 	def get_by_openid(cls, openid):
 		try:
@@ -42,9 +51,10 @@ class Identity(db.Model):
 		except:# in case that database doesn't exist
 			return 0
 	@classmethod
-	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12,train_state = 0):
+	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12,train_state = 0,merge_seq = 0):
 		est_rcd = cls.get_by_openid(openid)#existing records
 		if est_rcd:
+			est_rcd = est_rcd.merge_putn_data(short_dt = uploaded_data,seq = merge_seq)
 			est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases
 			if train_state:
 				est_rcd.train_state = train_state# only update train_state into 1, not backward
@@ -64,7 +74,7 @@ class Identity(db.Model):
 			est_rcd.fdbck += '<_>Relogin<_>'
 			return (est_rcd,0)# set a flag for session.add to be skipped in Main.py
 		cls.pzn_group[gender] = 1 - cls.pzn_group[gender]# 
-		rst = cls(openid=openid,group = cls.pzn_group[gender],gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn)
+		rst = cls(openid=openid,group = cls.pzn_group[gender],gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn,putin_data = uploaded_data)
 		# to satisfy superior editting of changing pzn_sessn or max_sessn
 		return (rst,1)
 		
