@@ -6,7 +6,7 @@ import json
 #from DeEnc.WXCrypt import WXBizDataCrypt as WXCrypt
 from flask import Flask,request,jsonify
 from ext import db
-from models import Identity
+from models import Identity,AudioInfo
 # flask end
 # gevent
 from gevent import monkey
@@ -32,7 +32,7 @@ def brothers():
 @app.route('/room506/')
 def roommate():
 	return "山舟，来，周嘉涛，秦王元；\n猴季，Mr.Sulu，大磊，米老"
-@app.route('/audioInfo/',methods = ['POST'])
+@app.route('/audioInfo/',methods=['POST'])
 def wx_getInfo():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
@@ -43,13 +43,12 @@ def wx_getInfo():
 def wx_UserLog():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
-	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid)#fetch the anew flag
+	if req_data[u'train_state']:
+		train_state=1
+	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,train_state = train_state)#fetch the anew flag
 	db.session.merge(record_anew)
 	db.session.commit()
-	app.logger.debug("in UserLog")
-	app.logger.debug(record_anew.created_time)
 	return jsonify({'pzn_sessn':record_anew.pzn_sessn})#max sessn can also be returned to extend training plans for the participant
-
 @app.route('/UserRegist/',methods=['GET','POST'])
 def wx_UserRegist():
 	appId = 'wxde4ed04d17675e14'

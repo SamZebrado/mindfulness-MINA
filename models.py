@@ -25,7 +25,7 @@ class Identity(db.Model):
 		self.created_time = str(datetime.now())
 		self.openid = openid
 		self.group = group
-		self.state = 0#not trained
+		self.train_state = 0#not trained
 		self.pzn_sessn = pzn_sessn
 		self.max_sessn = max_sessn
 		trsd_data =  putin_data.split('<ptn_>')
@@ -42,11 +42,13 @@ class Identity(db.Model):
 		except:# in case that database doesn't exist
 			return 0
 	@classmethod
-	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12):
+	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12,train_state = 0):
 		est_rcd = cls.get_by_openid(openid)#existing records
 		if est_rcd:
-			est_rcd.max_sessn = max_sessn
-			if est_rcd.state and est_rcd.pzn_sessn<=max_sessn:
+			est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases
+			if train_state:
+				est_rcd.train_state = train_state# only update train_state into 1, not backward
+			if est_rcd.train_state and est_rcd.pzn_sessn<=max_sessn:
 				t_n = datetime.now()# time of now
 				d_n = t_n.date()#date of now
 				yr,mt,dy = est_rcd.created_time[0:10].split()#update date and pzn_sessn if necessary
@@ -55,6 +57,7 @@ class Identity(db.Model):
 					diff = int(str(d_n-dt).split(" ",1)[0])
 					if diff>(est.pzn_sessn-1):# not capable of missed more than one day, in codes here, multiple training will be allowed after multiple missed day
 						est_rcd.pzn_sessn += 1
+						est_rcd.train_state = 0# reset the state to 0
 						if diff>est.pzn_sessn-1:#if diff of date still >1
 							est_rcd.fdbck +=  "<_>pull_strt_from_" + est_rcd.created_time + "<_>"
 							est_rcd.created_time = str(d_t + timedelta(days=diff-est.pzn_sessn+1))+ estrcd.created_time[11:]
@@ -79,5 +82,5 @@ class AudioInfo(db.Model):
 	def get_Info(cls,sessn_No=1,group=1):
 	
 		a_rcd = cls.query.filter_by(sessn_No = sessn_No,group = group).first()
-		audioInfo = {'name':a_rcd.Name,'src':a_rcd.links}
+		audioInfo = {'name':a_rcd.Name,'src':a_rcd.Links}
 		return audioInfo
