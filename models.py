@@ -72,5 +72,12 @@ class AudioInfo(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
 	sessn_No = db.Column(db.Integer)
-	AudioName = db.Column(db.String(80))
-	AudioLinks = db.Column(db.String(128))
+	Name = db.Column(db.String(80))
+	Links = db.Column(db.String(128))
+	group = db.Column(db.Integer)
+	@classmethod
+	def get_Info(cls,sessn_No=1,group=1):
+	
+		a_rcd = cls.query.filter_by(sessn_No = sessn_No,group = group).first()
+		audioInfo = {'name':a_rcd.Name,'src':a_rcd.links}
+		return audioInfo
