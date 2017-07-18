@@ -43,9 +43,18 @@ def wx_getInfo():
 def wx_UserLog():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
-	if req_data[u'train_state']:
+	if hasattr(req_data,u'train_state'):
 		train_state=1
-	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,train_state = train_state)#fetch the anew flag
+		app.logger.debug('Training finished!')
+	else:
+		train_state=0
+	if hasattr(req_data,u'uploaded_data'):
+		app.logger.debug('data_uploaded')
+		uploaded_data = req_data[u'uploaded_data']
+	else:
+		uploaded_data = ''
+	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,\
+train_state = train_state,uploaded_data = uploaded_data)#fetch the anew flag
 	db.session.merge(record_anew)
 	db.session.commit()
 	return jsonify({'pzn_sessn':record_anew.pzn_sessn})#max sessn can also be returned to extend training plans for the participant
