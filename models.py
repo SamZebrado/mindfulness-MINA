@@ -6,7 +6,7 @@ class Identity(db.Model):
 	__tablename__ = 'Identity'
 
 	id = db.Column(db.Integer, primary_key=True,autoincrement=True)
-	gender = db.Column(db.Integer)# 0 for girls, 1 for boys, and 2 for unknown...
+	gender = db.Column(db.Integer)# 2 for girls, 1 for boys, and 0 for unknown...
 	openid = db.Column(db.String(128),unique=True)
 	group = db.Column(db.Integer)# randomly assigned according to gender
 	pzn_sessn = db.Column(db.Integer)# start from zero
@@ -18,7 +18,7 @@ class Identity(db.Model):
 	name = db.Column(db.String(28))
 	email = db.Column(db.String(120))
 	session_key = db.Column(db.String(120))
-	fdbck = db.Column(db.String(3000))# stored in formatted string, one section for each day, 10 - 30 characters for each day
+	fdbck = db.Column(db.String(8000))# stored in formatted string, one section for each day, 10 - 30 characters for each day,also added is user_info_log
 
 	def __init__(self,openid,group=1,gender = 2,pzn_sessn=1,max_sessn=12,putin_data = '',session_key = ''):
 		self.session_key = session_key
@@ -28,17 +28,17 @@ class Identity(db.Model):
 		self.train_state = 0#not trained
 		self.pzn_sessn = pzn_sessn
 		self.max_sessn = max_sessn
-		trsd_data =  putin_data.split('<ptn_>')
+		self.gender = gender
+		trsd_data =  putin_data.split('<ptn_>',4)
 		if len(trsd_data)==5:
-			self.usr_name,self.name,self.email,self.daily_ratn,self.fdbck =trsd_data
+			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =trsd_data
 		else:
 			self.fdbck = putin_data
 			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
 	def putn_data(self):
-		return "<putn_>".join([self.usr_name,self.name,self.email,self.daily_ratn,self.fdbck])
-	def merge_putn_data(self,short_dt = '',seq = 0):#if seq<0, short_dt will be added at the end of long_dt in
-# inversed sequence
+		return "<putn_>".join([self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn])
+	def merge_putn_data(self,short_dt = '',seq = -2):#std_p could be less than zero, -2 by default to add new info to fdbck
 		ds1 = list(self.putn_data().split('<ptn_>'))
 		ds2 = list(short_dt.split('<ptn_>'))
 		for ii in range(0,len(ds2)):
@@ -51,7 +51,7 @@ class Identity(db.Model):
 		except:# in case that database doesn't exist
 			return 0
 	@classmethod
-	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12,train_state = 0,merge_seq = 0):
+	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12,train_state = 0,merge_seq = -2):
 		est_rcd = cls.get_by_openid(openid)#existing records
 		if est_rcd:
 			est_rcd = est_rcd.merge_putn_data(short_dt = uploaded_data,seq = merge_seq)
