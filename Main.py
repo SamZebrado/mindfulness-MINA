@@ -32,12 +32,13 @@ def brothers():
 @app.route('/room506/')
 def roommate():
 	return "山舟，来，周嘉涛，秦王元；\n猴季，Mr.Sulu，大磊，米老"
-@app.route('/audioInfo/',methods=['POST'])
+@app.route('/AudioInfo/',methods=['POST'])
 def wx_getInfo():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
 	rcd = Identity.get_by_openid(openid = openid)#present record
 	audioInfo = AudioInfo.get_Info(sessn_No = rcd.pzn_sessn,group = rcd.group)#selected audio record
+	app.logger.debug(json.dumps(audioInfo))
 	return json.dumps(audioInfo)
 @app.route('/UserLog/',methods=['POST'])
 def wx_UserLog():
@@ -55,6 +56,8 @@ def wx_UserLog():
 		uploaded_data = ''
 	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,\
 train_state = train_state,uploaded_data = uploaded_data)#fetch the anew flag
+	if hasattr(req_data,u'gender'):
+		record_anew.gender = req_data[u'gender']
 	db.session.merge(record_anew)
 	db.session.commit()
 	return jsonify({'pzn_sessn':record_anew.pzn_sessn})#max sessn can also be returned to extend training plans for the participant
@@ -85,7 +88,7 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		app.logger.debug("in UserRegist after commit")
 		app.logger.debug(record_anew.created_time)
 		try:
-			return jsonify({'openid':res[u'openid']})
+			return jsonify({'openid':res[u'openid'],'flag_anew':flag_anew})
 		except:
 			return res[u'errmsg']
 		
