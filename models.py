@@ -2,7 +2,8 @@
 from datetime import datetime,date,timedelta
 from ext import db
 class Identity(db.Model):
-	pzn_group = [1,1,1]# present group, 1 for mindfulness group, each site corresponding to female (0),male (1),unknown(2)
+	#pzn_group = [1,1,1]# present group, 1 for mindfulness group, each site corresponding to female (0),male (1),unknown(2),this settings is removed since it doen't work so well 
+#when app is restarted several times
 	__tablename__ = 'Identity'
 
 	id = db.Column(db.Integer, primary_key=True,autoincrement=True)
@@ -20,7 +21,7 @@ class Identity(db.Model):
 	session_key = db.Column(db.String(120))
 	fdbck = db.Column(db.String(8000))# stored in formatted string, one section for each day, 10 - 30 characters for each day,also added is user_info_log
 
-	def __init__(self,openid,group=1,gender = 2,pzn_sessn=1,max_sessn=12,putin_data = '',session_key = ''):
+	def __init__(self,openid,group=1,gender = 2,pzn_sessn=1,max_sessn=14,putin_data = '',session_key = ''):
 		self.session_key = session_key
 		self.created_time = str(datetime.now())
 		self.openid = openid
@@ -29,32 +30,43 @@ class Identity(db.Model):
 		self.pzn_sessn = pzn_sessn
 		self.max_sessn = max_sessn
 		self.gender = gender
-		trsd_data =  putin_data.split('<ptn_>',4)
+		trsd_data =  putin_data.split('<ptn_>',4)		
 		if len(trsd_data)==5:
 			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =trsd_data
 		else:
 			self.fdbck = putin_data
 			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
+	def split_putn(self,trsd_data):# since in __init__, self hasn't been created, 
+		#so this part of code couldn't replace the similar one in __init__
+		if len(trsd_data)==5:
+			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =trsd_data
+		else:
+			self.fdbck = putin_data
+			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
+			#deal with wrong number of <ptn_> or default parametres for data_checking
+		return self
 	def putn_data(self):
 		return "<putn_>".join([self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn])
 	def merge_putn_data(self,short_dt = '',seq = -2):#std_p could be less than zero, -2 by default to add new info to fdbck
-		ds1 = list(self.putn_data().split('<ptn_>'))
-		ds2 = list(short_dt.split('<ptn_>'))
-		for ii in range(0,len(ds2)):
-			ds1[ii+seq] += ds2[ii]
-		return self
+		if len(short_dt):# only insert non-empty string
+			ds1 = list(self.putn_data().split('<ptn_>',4))
+			ds2 = list(short_dt.split('<ptn_>'))
+			for ii in range(0,len(ds2)):
+				ds1[ii+seq] += ds2[ii]
+		return self.split_putn(ds1)
 	@classmethod
 	def get_by_openid(cls, openid):
 		try:
 			return cls.query.filter_by(openid=openid).first()
 		except:# in case that database doesn't exist
+			print "for in-line debugging"
 			return 0
 	@classmethod
-	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=12,train_state = 0,merge_seq = -2):
+	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=14,train_state = 0,merge_seq = -2):
 		est_rcd = cls.get_by_openid(openid)#existing records
 		if est_rcd:
-			est_rcd = est_rcd.merge_putn_data(short_dt = uploaded_data,seq = merge_seq)
+			est_rcd = est_rcd.merge_putn_data(short_dt = uploaded_data,seq = merge_seq)# by default start merging from  fdbk
 			est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases
 			if train_state:
 				est_rcd.train_state = train_state# only update train_state into 1, not backward
@@ -73,8 +85,13 @@ class Identity(db.Model):
 							est_rcd.created_time = str(d_t + timedelta(days=diff-est.pzn_sessn+1))+ estrcd.created_time[11:]
 			est_rcd.fdbck += '<_>Relogin<_>'
 			return (est_rcd,0)# set a flag for session.add to be skipped in Main.py
-		cls.pzn_group[gender] = 1 - cls.pzn_group[gender]# 
-		rst = cls(openid=openid,group = cls.pzn_group[gender],gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn,putin_data = uploaded_data)
+		try:
+			lst_rcd = cls.query.filter_by(gender=gender).order_by(cls.gender.desc()).first()#last record with same gender
+			err = lst_.gender
+		except:# in case that record doesn't exist
+			lst_rcd = cls(openid = 'example_for_gender_'+str(gender),gender=gender,group=0)#Create a sample record in control group
+#		cls.pzn_group[gender] = 1 - cls.pzn_group[gender]# 
+		rst = cls(openid=openid,group = 1-lst_rcd.group,gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn,putin_data = uploaded_data)
 		# to satisfy superior editting of changing pzn_sessn or max_sessn
 		return (rst,1)
 		

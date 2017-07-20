@@ -44,12 +44,14 @@ def wx_getInfo():
 def wx_UserLog():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
-	if hasattr(req_data,u'train_state'):
+	#app.logger.debug(json.dumps(req_data[u'train_state']))
+	if req_data.has_key(u'train_state'):
 		train_state=1
 		app.logger.debug('Training finished!')
 	else:
 		train_state=0
-	if hasattr(req_data,u'uploaded_data'):
+		app.logger.debug('Training state undetected')
+	if req_data.has_key(u'uploaded_data'):
 		app.logger.debug('data_uploaded')
 		uploaded_data = req_data[u'uploaded_data']
 	else:
@@ -60,7 +62,7 @@ train_state = train_state,uploaded_data = uploaded_data)#fetch the anew flag
 		record_anew.gender = req_data[u'gender']
 	db.session.merge(record_anew)
 	db.session.commit()
-	return jsonify({'pzn_sessn':record_anew.pzn_sessn})#max sessn can also be returned to extend training plans for the participant
+	return jsonify({'pzn_sessn':record_anew.pzn_sessn,'flag_anew':flag_anew})#max sessn can also be returned to extend training plans for the participant
 @app.route('/UserRegist/',methods=['GET','POST'])
 def wx_UserRegist():
 	appId = 'wxde4ed04d17675e14'
@@ -73,11 +75,11 @@ def wx_UserRegist():
 		url = 'https://api.weixin.qq.com/sns/jscode2session?appid=wxde\
 4ed04d17675e14&secret=c12283859e80a742ef233b73eafaff33&\
 js_code='+req_data[u'code']+'&grant_type=authorization_code'
-		app.logger.debug(url)
+		#app.logger.debug(url)
 		f = urllib2.urlopen(url)
 		res = json.loads(f.read())
 		f.close()
-		app.logger.debug(res)		#iv = req_data.iv
+		#app.logger.debug(res)		#iv = req_data.iv
 		#session_key and openid should be saved, while session_key shouldn't be transed by web
 		openid = res[u'openid']
 		(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid)#fetch the anew flag
