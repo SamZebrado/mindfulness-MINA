@@ -42,7 +42,8 @@ class Identity(db.Model):
 		if len(ptn_data)==5:
 			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =ptn_data
 		else:
-			self.fdbck = putin_data
+			self.fdbck = ptn_data
+			print(self.fdbck)
 			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
 		return self
@@ -53,8 +54,9 @@ class Identity(db.Model):
 			ds1 = list(self.ptn_data().split('<ptn_>',4))
 			ds2 = list(short_dt.split('<ptn_>'))
 			for ii in range(0,len(ds2)):
+				print('ds1'+' ds2'+ds2 +'ii:' + str(ii) + 'seq:' + str(seq))
 				ds1[ii+seq] += ds2[ii]
-		return self.split_putn(ds1)
+		return self.split_putn('<ptn_>'.join(ds1))
 	@classmethod
 	def get_by_openid(cls, openid):
 		try:
