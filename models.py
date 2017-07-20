@@ -30,27 +30,27 @@ class Identity(db.Model):
 		self.pzn_sessn = pzn_sessn
 		self.max_sessn = max_sessn
 		self.gender = gender
-		trsd_data =  putin_data.split('<ptn_>',4)		
-		if len(trsd_data)==5:
-			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =trsd_data
+		ptn_data =  putin_data.split('<ptn_>',4)		
+		if len(ptn_data)==5:
+			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =ptn_data
 		else:
 			self.fdbck = putin_data
 			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
-	def split_putn(self,trsd_data):# since in __init__, self hasn't been created, 
+	def split_putn(self,ptn_data):# since in __init__, self hasn't been created, 
 		#so this part of code couldn't replace the similar one in __init__
-		if len(trsd_data)==5:
-			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =trsd_data
+		if len(ptn_data)==5:
+			self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn =ptn_data
 		else:
 			self.fdbck = putin_data
 			self.usr_name,self.name,self.email,self.daily_ratn = ('Bugs','Is','Nothg','BtChallnge')
 			#deal with wrong number of <ptn_> or default parametres for data_checking
 		return self
-	def putn_data(self):
+	def ptn_data(self):
 		return "<putn_>".join([self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn])
-	def merge_putn_data(self,short_dt = '',seq = -2):#std_p could be less than zero, -2 by default to add new info to fdbck
+	def merge_ptn_data(self,short_dt = '',seq = -2):#std_p could be less than zero, -2 by default to add new info to fdbck
 		if len(short_dt):# only insert non-empty string
-			ds1 = list(self.putn_data().split('<ptn_>',4))
+			ds1 = list(self.ptn_data().split('<ptn_>',4))
 			ds2 = list(short_dt.split('<ptn_>'))
 			for ii in range(0,len(ds2)):
 				ds1[ii+seq] += ds2[ii]
@@ -66,7 +66,7 @@ class Identity(db.Model):
 	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=14,train_state = 0,merge_seq = -2):
 		est_rcd = cls.get_by_openid(openid)#existing records
 		if est_rcd:
-			est_rcd = est_rcd.merge_putn_data(short_dt = uploaded_data,seq = merge_seq)# by default start merging from  fdbk
+			est_rcd = est_rcd.merge_ptn_data(short_dt = uploaded_data,seq = merge_seq)# by default start merging from  fdbk
 			est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases
 			if train_state:
 				est_rcd.train_state = train_state# only update train_state into 1, not backward
