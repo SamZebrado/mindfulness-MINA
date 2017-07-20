@@ -48,13 +48,13 @@ class Identity(db.Model):
 			#deal with wrong number of <ptn_> or default parametres for data_checking
 		return self
 	def ptn_data(self):
-		return "<putn_>".join([self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn])
+		return "<ptn_>".join([self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn])
 	def merge_ptn_data(self,short_dt = '',seq = -2):#std_p could be less than zero, -2 by default to add new info to fdbck
 		if len(short_dt):# only insert non-empty string
 			ds1 = list(self.ptn_data().split('<ptn_>',4))
 			ds2 = list(short_dt.split('<ptn_>'))
 			for ii in range(0,len(ds2)):
-				print('ds1'+' ds2'+ds2 +'ii:' + str(ii) + 'seq:' + str(seq))
+				#print('ds1: '+ds1[ii+seq] +' ds2: '+ds2[ii] +'ii: ' + str(ii) + 'seq: ' + str(seq))
 				ds1[ii+seq] += ds2[ii]
 		return self.split_putn('<ptn_>'.join(ds1))
 	@classmethod
@@ -62,7 +62,7 @@ class Identity(db.Model):
 		try:
 			return cls.query.filter_by(openid=openid).first()
 		except:# in case that database doesn't exist
-			print "for in-line debugging"
+			#print "for in-line debugging"
 			return 0
 	@classmethod
 	def update_id_unique_record(cls,openid,uploaded_data='',gender=2,pzn_sessn=1,max_sessn=14,train_state = 0,merge_seq = -2):
