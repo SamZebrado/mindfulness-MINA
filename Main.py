@@ -37,6 +37,9 @@ def wx_getInfo():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
 	rcd = Identity.get_by_openid(openid = openid)#present record
+	if not rcd:
+		(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)# In debugging case,maybe audio info could be request before regist
+		app.logger.debug('No record for present openid')
 	audioInfo = AudioInfo.get_Info(sessn_No = rcd.pzn_sessn,group = rcd.group)#selected audio record
 	app.logger.debug(json.dumps(audioInfo))
 	return json.dumps(audioInfo)
@@ -51,15 +54,21 @@ def wx_UserLog():
 	else:
 		train_state=0
 		app.logger.debug('Training state undetected')
+	if req_data.has_key(u'gender'):
+		gender = req_data[u'gender']
+		app.logger.debug('Gender Loaded')
+	else:
+		gender = 0
 	if req_data.has_key(u'uploaded_data'):
 		app.logger.debug('data_uploaded')
 		uploaded_data = req_data[u'uploaded_data']
 	else:
 		uploaded_data = ''
 	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,\
-train_state = train_state,uploaded_data = uploaded_data)#fetch the anew flag
+train_state = train_state,uploaded_data = uploaded_data,gender = gender)#fetch the anew flag
 	if hasattr(req_data,u'gender'):
 		record_anew.gender = req_data[u'gender']
+		app.logger.debug(cls.query.filter_by(gender=gender).order_by(cls.gender.desc()).first())#last record with same gender
 	db.session.merge(record_anew)
 	db.session.commit()
 	return jsonify({'pzn_sessn':record_anew.pzn_sessn,'flag_anew':flag_anew})#max sessn can also be returned to extend training plans for the participant
@@ -82,7 +91,8 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		#app.logger.debug(res)		#iv = req_data.iv
 		#session_key and openid should be saved, while session_key shouldn't be transed by web
 		openid = res[u'openid']
-		(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid)#fetch the anew flag
+		session_key = res[u'session_key']
+		(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,session_key=session_key)#fetch the anew flag
 		app.logger.debug("in UserRegist before commit")
 		app.logger.debug(record_anew.created_time)
 		db.session.merge(record_anew)
