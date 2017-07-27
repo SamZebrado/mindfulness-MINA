@@ -93,8 +93,8 @@ class Identity(db.Model):
 						est_rcd.train_state = 0# reset the state to 0
 						if diff>est_rcd.pzn_sessn-1:#if diff of date still >1
 							est_rcd.fdbck +=  "<_>pull_strt_from_" + est_rcd.created_time + "<_>"
-							est_rcd.created_time = datetime.strptime(str(dt + timedelta(days=diff-est_rcd.pzn_sessn+1)).split('.')[0]+ \
-est_rcd.created_time[11:],'%Y-%m-%d %H:%M:%S.')
+							est_rcd.created_time = datetime.strptime(str(dt + timedelta(days=diff-est_rcd.pzn_sessn+1)).split('.')[0]+ ' ' + \
+est_rcd.created_time[11:19],'%Y-%m-%d %H:%M:%S')
 			est_rcd.fdbck += '<_>Log:<_>'
 			if session_key:
 				est_rcd.session_key=session_key
