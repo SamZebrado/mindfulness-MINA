@@ -15,7 +15,7 @@ class Identity(db.Model):
 	train_state = db.Column(db.Integer)# 0 for not trained
 	created_time = db.Column(db.DateTime, nullable=False)
 	daily_ratn = db.Column(db.String(1500))# stored in formatted string, one section for each day
-	usr_name = db.Column(db.String(80))
+	usr_name = db.Column(db.String(200))
 	name = db.Column(db.String(28))
 	email = db.Column(db.String(120))
 	session_key = db.Column(db.String(120))
