@@ -51,8 +51,8 @@ class Identity(db.Model):
 	def ptn_data(self):
 		return "<ptn_>".join([self.usr_name,self.name,self.email,self.fdbck,self.daily_ratn])
 	def merge_ptn_data(self,short_dt = '',seq = -2):#std_p could be less than zero, -2 by default to add new info to fdbck
+		ds1 = list(self.ptn_data().split('<ptn_>',4))
 		if len(short_dt):# only insert non-empty string
-			ds1 = list(self.ptn_data().split('<ptn_>',4))
 			ds2 = list(short_dt.split('<ptn_>'))
 			if len(ds2)==5:
 				seq=0#if all data uploaded, merged from the beginning
