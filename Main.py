@@ -36,10 +36,9 @@ def roommate():
 def wx_getInfo():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
-	rcd = Identity.get_by_openid(openid = openid)#present record
-	if not rcd:
-		(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)# In debugging case,maybe audio info could be request before regist
-		app.logger.debug('No record for present openid')
+	(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)#update pzn_sessn in function update_id_unique_record
+	if flag_anew:# In debugging case,maybe audio info could be request before regist
+		app.logger.debug('No record for present openid!')
 	audioInfo = AudioInfo.get_Info(sessn_No = rcd.pzn_sessn,group = rcd.group)#selected audio record
 	app.logger.debug(json.dumps(audioInfo))
 	return json.dumps(audioInfo)
@@ -64,8 +63,13 @@ def wx_UserLog():
 		uploaded_data = req_data[u'uploaded_data']
 	else:
 		uploaded_data = ''
+	if req_data.has_key(u'merge_seq'):
+		app.logger.debug('merge_seq detected')
+		merge_seq = req_data[u'merge_seq']
+	else:
+		merge_seq = -2
 	(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,\
-train_state = train_state,uploaded_data = uploaded_data,gender = gender)#fetch the anew flag
+train_state = train_state,uploaded_data = uploaded_data,gender = gender,merge_seq = merge_seq)#fetch the anew flag
 	if hasattr(req_data,u'gender'):
 		record_anew.gender = req_data[u'gender']
 		app.logger.debug(cls.query.filter_by(gender=gender).order_by(cls.gender.desc()).first())#last record with same gender
