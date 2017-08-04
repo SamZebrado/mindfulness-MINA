@@ -71,8 +71,16 @@ class Identity(db.Model):
 	def update_id_unique_record(cls,openid,uploaded_data='',gender=0,pzn_sessn=1,max_sessn=14,train_state = 0,merge_seq = -2,session_key=0):
 		est_rcd = cls.get_by_openid(openid)#existing records
 		if est_rcd:
-			if gender:#only updated when gender is not 0(if gender is uploaded, it won't be set zero in Main.py)
+			if not est_rcd.gender:# After Regist,the gender would be initialized with 0, and group hasn't been set at this time
+				try:
+					lst_rcd = cls.query.filter_by(gender=gender)[-1]#find last record and make present record in a different group
+					err = lst_rcd.gender
+				except:# in case that record doesn't exist
+					lst_rcd = cls(openid = 'example_for_gender_'+str(gender),gender=gender,group=0)#Create a sample record in control group
+				est_rcd.group = 1 - lst_rcd.group#make it in the different group
+			if gender:#only updated when gender is not 0(if gender is uploaded, it won't be set zero in Main.py),but group won't be updated
 				est_rcd.gender = gender
+				est_rcd.fdbck += "<_gender_" + str(gender)#Log the updates of gender
 			est_rcd = est_rcd.merge_ptn_data(short_dt = uploaded_data,seq = merge_seq)# by default start merging from  fdbk
 			est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases
 			est_rcd.created_time = str(est_rcd.created_time)
@@ -89,7 +97,7 @@ class Identity(db.Model):
 				if d_n>dt:
 					diff = int(str(d_n-dt).split(" ",1)[0])
 					if diff>(est_rcd.pzn_sessn-1):# not capable of missed more than one day, in codes here, multiple training will be allowed after multiple missed day
-						est_rcd.pzn_sessn += 1
+						est_rcd.pzn_sessn += 1# this if is only executed on the second day
 						est_rcd.train_state = 0# reset the state to 0
 						if diff>est_rcd.pzn_sessn-1:#if diff of date still >1
 							est_rcd.fdbck +=  "<_>pull_strt_from_" + est_rcd.created_time + "<_>"
@@ -99,14 +107,7 @@ est_rcd.created_time[11:19],'%Y-%m-%d %H:%M:%S')
 			if session_key:
 				est_rcd.session_key=session_key
 			return (est_rcd,0)# set a flag for session.add to be skipped in Main.py
-		try:
-			lst_rcd = cls.query.filter_by(gender=gender).order_by(cls.gender.desc()).first()#last record with same gender
-			err = lst_rcd.gender
-		except:# in case that record doesn't exist
-			lst_rcd = cls(openid = 'example_for_gender_'+str(gender),gender=gender,group=0)#Create a sample record in control group
-#		cls.pzn_group[gender] = 1 - cls.pzn_group[gender]# 
-		rst = cls(openid=openid,group = 1-lst_rcd.group,gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn,putin_data = uploaded_data,session_key=session_key)
-		# to satisfy superior editting of changing pzn_sessn or max_sessn
+		rst = cls(openid=openid,group = -1,gender=gender,pzn_sessn = pzn_sessn,max_sessn = max_sessn,putin_data = uploaded_data,session_key=session_key)#group set to -1 to show that it hasn't been set, and the participant thus won't be able to fetch audioInfo
 		return (rst,1)
 		
 
@@ -121,7 +122,6 @@ class AudioInfo(db.Model):
 	group = db.Column(db.Integer)
 	@classmethod
 	def get_Info(cls,sessn_No=1,group=1):
-	
 		a_rcd = cls.query.filter_by(sessn_No = sessn_No,group = group).first()
 		audioInfo = {'name':a_rcd.Name,'src':a_rcd.Links}
 		return audioInfo
