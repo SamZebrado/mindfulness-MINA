@@ -82,11 +82,11 @@ class Identity(db.Model):
 				est_rcd.gender = gender
 				est_rcd.fdbck += "<_gender_" + str(gender)#Log the updates of gender
 			est_rcd = est_rcd.merge_ptn_data(short_dt = uploaded_data,seq = merge_seq)# by default start merging from  fdbk
-			est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases
+			#est_rcd.max_sessn = max_sessn# This Updates has to be commited onto databases, change this so max_sessn could be changed back in the database
 			est_rcd.created_time = str(est_rcd.created_time)
 			if train_state:
 				est_rcd.train_state = train_state# only update train_state into 1, not backward
-			if est_rcd.train_state and est_rcd.pzn_sessn<=max_sessn:
+			if est_rcd.train_state and est_rcd.pzn_sessn<=est_rcd.max_sessn:
 				t_n = datetime.now()# time of now
 				d_n = t_n.date()#date of now
 				yr,mt,dy = est_rcd.created_time[0:10].split('-')#update date and pzn_sessn if necessary

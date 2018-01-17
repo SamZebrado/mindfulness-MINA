@@ -22,7 +22,9 @@ with app.app_context():
 	db.create_all()
 
 # audioInfo ={'name':'Testing title from server', 'author':'Sammuel Zebradoe','src':	'http://szdatabucket1-1253981734.cossh.myqcloud.com/lxAudio_40_Days/lsn_1.mp3'#'http://dx.sc.chinaz.com/Files/DownLoad/sound1/201707/8934.mp3' }
-
+@app.route('/')
+def homepage():
+	return "这是一个网站。吉ICP备17004892号"
 @app.route('/tag/')
 def index():
 	return "SZ loves Ana"
@@ -37,8 +39,16 @@ def wx_getInfo():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
 	(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)#update pzn_sessn in function update_id_unique_record
+	app.logger.debug('Info_Get Approaching for Openid = '+openid)
 	if flag_anew:# In debugging case,maybe audio info could be request before regist
 		app.logger.debug('No record for present openid!')
+	if (rcd.group!=0)and(rcd.group!=1):
+		rcd.group = 1
+		app.logger.debug('Subject without gender Info Enter Here!')
+		rcd.fdbck += '<_BugNOGender_>'
+	db.session.merge(rcd)#Whatever happened, rcd should be updated before looking up, since sometimes update in Login was skipped for unclarified reason
+	db.session.commit()
+	(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)#update pzn_sessn in function update_id_unique_record
 	audioInfo = AudioInfo.get_Info(sessn_No = rcd.pzn_sessn,group = rcd.group)#selected audio record
 	app.logger.debug(json.dumps(audioInfo))
 	return json.dumps(audioInfo)
@@ -49,10 +59,10 @@ def wx_UserLog():
 	#app.logger.debug(json.dumps(req_data[u'train_state']))
 	if req_data.has_key(u'train_state'):
 		train_state=1
-		app.logger.debug('Training finished!')
+		app.logger.debug('Training state: one')
 	else:
 		train_state=0
-		app.logger.debug('Training state undetected')
+		app.logger.debug('Training state: zero')
 	if req_data.has_key(u'gender'):
 		gender = req_data[u'gender']
 		app.logger.debug('Gender Loaded')
@@ -112,6 +122,6 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		return '<h1> you are not allwed to get anything unless post<h1>'
 
 if __name__ =='__main__':
-	app.run(host = '0.0.0.0',port = 443,ssl_context=("Crts/214194239870590.pem","Crts/214194239870590.key"))#http_server = WSGIServer(('', 5000), app)
+	app.run(host = '0.0.0.0',port = 443,ssl_context=("Crts/214194239870590.pem","Crts/214194239870590.key"),threaded=True)#http_server = WSGIServer(('', 5000), app)
 #http_server.serve_forever()
 
