@@ -1,0 +1,9 @@
+# Local runtime artifacts and deployment secrets
+*.py[cod]
+__pycache__/
+*.log
+/temp
+.env
+.env.*
+!.env.example
+/Crts/

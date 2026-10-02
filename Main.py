@@ -1,5 +1,6 @@
 # coding=utf-8
 import urllib
+from consts import WECHAT_APP_ID, WECHAT_APP_SECRET
 import urllib2
 import json
 # flask
@@ -39,18 +40,15 @@ def wx_getInfo():
 	req_data = json.loads(request.get_data())
 	openid = req_data[u'openid']
 	(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)#update pzn_sessn in function update_id_unique_record
-	app.logger.debug('Info_Get Approaching for Openid = '+openid)
 	if flag_anew:# In debugging case,maybe audio info could be request before regist
-		app.logger.debug('No record for present openid!')
+		pass
 	if (rcd.group!=0)and(rcd.group!=1):
 		rcd.group = 1
-		app.logger.debug('Subject without gender Info Enter Here!')
 		rcd.fdbck += '<_BugNOGender_>'
 	db.session.merge(rcd)#Whatever happened, rcd should be updated before looking up, since sometimes update in Login was skipped for unclarified reason
 	db.session.commit()
 	(rcd,flag_anew) = Identity.update_id_unique_record(openid=openid)#update pzn_sessn in function update_id_unique_record
 	audioInfo = AudioInfo.get_Info(sessn_No = rcd.pzn_sessn,group = rcd.group)#selected audio record
-	app.logger.debug(json.dumps(audioInfo))
 	return json.dumps(audioInfo)
 @app.route('/UserLog/',methods=['POST'])
 def wx_UserLog():
@@ -59,22 +57,17 @@ def wx_UserLog():
 	#app.logger.debug(json.dumps(req_data[u'train_state']))
 	if req_data.has_key(u'train_state'):
 		train_state=1
-		app.logger.debug('Training state: one')
 	else:
 		train_state=0
-		app.logger.debug('Training state: zero')
 	if req_data.has_key(u'gender'):
 		gender = req_data[u'gender']
-		app.logger.debug('Gender Loaded')
 	else:
 		gender = 0
 	if req_data.has_key(u'uploaded_data'):
-		app.logger.debug('data_uploaded')
 		uploaded_data = req_data[u'uploaded_data']
 	else:
 		uploaded_data = ''
 	if req_data.has_key(u'merge_seq'):
-		app.logger.debug('merge_seq detected')
 		merge_seq = req_data[u'merge_seq']
 	else:
 		merge_seq = -2
@@ -82,22 +75,22 @@ def wx_UserLog():
 train_state = train_state,uploaded_data = uploaded_data,gender = gender,merge_seq = merge_seq)#fetch the anew flag
 	if hasattr(req_data,u'gender'):
 		record_anew.gender = req_data[u'gender']
-		app.logger.debug(cls.query.filter_by(gender=gender).order_by(cls.gender.desc()).first())#last record with same gender
 	db.session.merge(record_anew)
 	db.session.commit()
 	return jsonify({'pzn_sessn':record_anew.pzn_sessn,'flag_anew':flag_anew})#max sessn can also be returned to extend training plans for the participant
 @app.route('/UserRegist/',methods=['GET','POST'])
 def wx_UserRegist():
-	appId = 'wxde4ed04d17675e14'
 	if request.method=='POST':
 		req_data = json.loads(request.get_data())
 		#app.logger.debug('res')
 		#app.logger.debug(json.dumps(req_data))
 		#return req_data[u'code']
 		#encData = req_data.encryptedData
-		url = 'https://api.weixin.qq.com/sns/jscode2session?appid=wxde\
-4ed04d17675e14&secret=REMOVED_WECHAT_APP_SECRET&\
-js_code='+req_data[u'code']+'&grant_type=authorization_code'
+		url = 'https://api.weixin.qq.com/sns/jscode2session?' + urllib.urlencode({
+			'appid': WECHAT_APP_ID,
+			'secret': WECHAT_APP_SECRET,
+			'js_code': req_data[u'code'],
+			'grant_type': 'authorization_code'})
 		#app.logger.debug(url)
 		f = urllib2.urlopen(url)
 		res = json.loads(f.read())
@@ -107,12 +100,8 @@ js_code='+req_data[u'code']+'&grant_type=authorization_code'
 		openid = res[u'openid']
 		session_key = res[u'session_key']
 		(record_anew,flag_anew) = Identity.update_id_unique_record(openid=openid,session_key=session_key)#fetch the anew flag
-		app.logger.debug("in UserRegist before commit")
-		app.logger.debug(record_anew.created_time)
 		db.session.merge(record_anew)
 		db.session.commit()
-		app.logger.debug("in UserRegist after commit")
-		app.logger.debug(record_anew.created_time)
 		try:
 			return jsonify({'openid':res[u'openid'],'flag_anew':flag_anew})
 		except:
